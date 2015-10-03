@@ -37,10 +37,10 @@
             #js {:className "ui text container"}
             (dom/h1
               #js {:className "ui inverted header"}
-              "Melamine!")
+              "Notifsta")
             (dom/h2
               #js {}
-              "Your wonderful amazing message goes here!")
+              "An app for your event in 10 minutes")
             (om/build
               login-signup/login-signup-view credentials))
           )

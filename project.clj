@@ -18,7 +18,8 @@
                  [enlive "1.1.6"]
                  [org.omcljs/om "0.9.0"]
                  [secretary "1.2.3"]
-                 [cljsjs/jquery "1.9.1-0"] 
+                 [cljsjs/jquery "1.9.1-0"]
+                 [cljsjs/moment "2.10.6-0"]
                  [environ "1.0.0"]]
 
   :plugins [[lein-cljsbuild "1.0.5"]
