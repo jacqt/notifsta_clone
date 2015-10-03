@@ -1,0 +1,49 @@
+.masthead.segment {
+  padding: 1em 0em;
+}
+.masthead .logo.item img {
+  margin-right: 1em;
+}
+.masthead .ui.menu .ui.button {
+  margin-left: 0.5em;
+}
+.masthead h1.ui.header {
+  margin-bottom: 0em;
+  font-size: 4em;
+  font-weight: normal;
+}
+.masthead h2 {
+  font-size: 1.7em;
+  font-weight: normal;
+}
+
+
+/* Landing page view */
+.landing-page-view .masthead.segment {
+  min-height: 700px;
+}
+
+.landing-page-view .masthead h1.ui.header {
+  margin-top: 3em;
+}
+
+/* Dashboard view */
+.dashboard-view {
+  margin-left: 50px;
+  margin-right: 50px;
+}
+.dashboard-welcome h1 {
+  text-align: center;
+}
+
+.dashboard-content .event-cards .event-card .image {
+  background-position: 50%;
+  background-size: cover;
+  height: 250px;
+}
+
+/* Event view */
+
+.event-view  .masthead.segment{
+  height: 200px;
+}
