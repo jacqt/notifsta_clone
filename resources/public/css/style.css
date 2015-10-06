@@ -17,6 +17,9 @@
   font-weight: normal;
 }
 
+h1.page-title {
+  text-align: center;
+}
 
 /* Landing page view */
 .landing-page-view .masthead.segment {
@@ -32,9 +35,6 @@
   margin-left: 50px;
   margin-right: 50px;
 }
-.dashboard-welcome h1 {
-  text-align: center;
-}
 
 .dashboard-content .event-cards .event-card .image {
   background-position: 50%;
@@ -43,7 +43,6 @@
 }
 
 /* Event view */
-
 .event-view  .masthead.segment {
   height: 200px;
 }
@@ -52,7 +51,23 @@
   margin-top: 30px;
 }
 
-.event-view .event-content .event-notifications {
+.event-view .event-content .event-notifications .notification-list {
   max-height: 500px;
   overflow-y: scroll;
+}
+
+.event-view .event-content .event-timetable .timetable-segments {
+  max-height: 500px;
+  overflow-y: scroll;
+  overflow-x: hidden;
+}
+
+.event-view .event-content .event-stats .stat-sub-graph {
+  height: 500px;
+}
+
+/* Create event view */
+.create-event-view {
+  margin-top: 50px;
+  height: 700px;
 }

@@ -14,7 +14,7 @@
             #js {:className "brand item" :href "#/"}
             "Notifsta")
           (dom/a
-            #js {:className "item" :href "#/"}
+            #js {:className "item" :href "#/create_event"}
             "Create Event")
           )
         )

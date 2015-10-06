@@ -35,7 +35,7 @@
         #js {:className "dashboard-view"}
         (dom/div
           #js {:className "dashboard-welcome"}
-          (dom/h1 nil "Welcome to Notifsta!"))
+          (dom/h1 #js {:className "page-title"} "Welcome to Notifsta!"))
         (dom/div
           #js {:className "dashboard-content"}
           (dom/hr nil)

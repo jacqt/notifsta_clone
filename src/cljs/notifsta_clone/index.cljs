@@ -5,6 +5,7 @@
             [cljsjs.jquery]
             [cljs.pprint :as pprint]
             [cljs.core.async :refer [put! chan <!]]
+            [notifsta-clone.components.create-event :as create-event]
             [notifsta-clone.components.dashboard :as dashboard]
             [notifsta-clone.components.event :as event]
             [notifsta-clone.components.landing-page :as landing-page]
@@ -32,8 +33,9 @@
         (if-not (= "event" (:route @state))
           (om/build navbar/logged-in-navbar-view state))
         (case (@state :route)
-          "home" (om/build dashboard/dashboard-view state)
-          "event" (om/build event/event-view {:current-event (:current-event state)
+          :home (om/build dashboard/dashboard-view state)
+          :create-event (om/build create-event/create-event-view (:new-event state))
+          :event (om/build event/event-view {:current-event (:current-event state)
                                               :credentials (:credentials state)})
           (om/build dashboard/dashboard-view state))))))
 

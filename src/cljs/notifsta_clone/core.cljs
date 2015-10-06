@@ -14,6 +14,7 @@
 (defonce app-state (atom {:credentials (auth/get-credentials)
                           :current-event {}
                           :events {}
+                          :new-event {}
                           :route nil }))
 
 (defn main []

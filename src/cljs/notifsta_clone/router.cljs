@@ -8,7 +8,11 @@
 (defn route-app [app-state]
   (defroute
     "/" []
-    (swap! app-state assoc :route "home"))
+    (swap! app-state assoc :route :home))
+
+  (defroute
+    "/create_event" []
+    (swap! app-state assoc :route :create-event))
 
   (defroute
     "/event/:id" [id]
@@ -16,7 +20,7 @@
       id
       (fn [response]
         (let [new-event (:data response)]
-          (swap! app-state assoc :route "event")
+          (swap! app-state assoc :route :event)
           (swap! app-state assoc :current-event new-event))))))
 
 ; enable fallback that don't have HTML 5 History
