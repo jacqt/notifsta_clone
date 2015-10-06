@@ -1,7 +1,8 @@
 (ns notifsta-clone.router
   (:require [secretary.core :as secretary :include-macros true :refer-macros [defroute]]
             [goog.events :as events]
-            [goog.history.EventType :as EventType])
+            [goog.history.EventType :as EventType]
+            [notifsta-clone.utils.http :as http])
   (:import goog.History))
 
 (defn route-app [app-state]
@@ -11,8 +12,12 @@
 
   (defroute
     "/event/:id" [id]
-    (swap! app-state assoc :current-event {:id id})
-    (swap! app-state assoc :route "event" )))
+    (http/get-event
+      id
+      (fn [response]
+        (let [new-event (:data response)]
+          (swap! app-state assoc :route "event")
+          (swap! app-state assoc :current-event new-event))))))
 
 ; enable fallback that don't have HTML 5 History
 (secretary/set-config! :prefix "#")

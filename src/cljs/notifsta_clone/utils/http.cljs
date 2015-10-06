@@ -65,3 +65,10 @@
         :url-params (auth/get-api-credentials)
         :on-complete on-complete
         :on-error (fn [error] (println "[LOG] Failed to get event info"))}))
+
+(defn get-event-subscribers [event-id on-complete]
+  (xhr {:method "GET"
+       :base-url (str EVENT_URL event-id "/subscriptions")
+       :url-params (auth/get-api-credentials)
+       :on-complete on-complete
+       :on-error (fn [error] (println "[LOG] Failed to get event info"))}))

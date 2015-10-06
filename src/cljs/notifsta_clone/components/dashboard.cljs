@@ -28,7 +28,6 @@
             (:description event)))))))
 
 (defn dashboard-view [{:keys [credentials events]} owner]
-  (pr (-> events :not_subscribed first))
   (reify
     om/IRenderState
     (render-state [this _]
@@ -36,12 +35,15 @@
         #js {:className "dashboard-view"}
         (dom/div
           #js {:className "dashboard-welcome"}
-          (dom/h1
-            #js {}
-            "Welcome to Notifsta!"))
+          (dom/h1 nil "Welcome to Notifsta!"))
         (dom/div
           #js {:className "dashboard-content"}
           (dom/hr nil)
+          (dom/h2 nil "Subscribed")
+          (dom/div
+            #js {:className "ui link four stackable cards event-cards"}
+            (om/build-all event-card-view (:subscribed events)))
+          (dom/h2 nil "Not subscribed")
           (dom/div
             #js {:className "ui link four stackable cards event-cards"}
             (om/build-all event-card-view (:not_subscribed events)))
