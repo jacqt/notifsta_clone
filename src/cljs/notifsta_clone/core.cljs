@@ -7,21 +7,15 @@
             [cljs.core.async :refer [put! chan <!]]
             [notifsta-clone.router :as router]
             [notifsta-clone.index :as index]
-            [notifsta-clone.utils.auth :as auth]))
+            [notifsta-clone.models :as models]))
 
 (enable-console-print!)
 
-(defonce app-state (atom {:credentials (auth/get-credentials)
-                          :current-event {}
-                          :events {}
-                          :new-event {}
-                          :route nil }))
-
 (defn main []
-  (router/route-app app-state)
+  (router/route-app models/app-state)
   (secretary/dispatch!
     (.substring (.. js/window -location -hash) 1))
   (om/root
     index/index-view
-    app-state
+    models/app-state
     {:target (js/document.getElementById "app")}))
