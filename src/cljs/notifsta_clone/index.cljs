@@ -30,7 +30,7 @@
     (render-state [this _]
       (dom/div
         nil
-        (if-not (= "event" (:route @state))
+        (if-not (= :event (:route @state))
           (om/build navbar/logged-in-navbar-view state))
         (case (@state :route)
           :home (om/build dashboard/dashboard-view state)
