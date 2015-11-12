@@ -1,5 +1,6 @@
 (ns notifsta-clone.utils.http
   (:require [notifsta-clone.utils.auth :as auth]
+            [cljs.core.async :refer [put! chan <!]]
             [goog.uri.utils :as uri-utils]
             [goog.net.XhrIo :as net-xhrio]))
 
@@ -11,30 +12,34 @@
 (def EVENT_URL (str BASE_URL "/events/"))
 
 ; parses goog.net.XhrIo response to a json
-(defn parse-xhrio-response [success-callback fail-callback]
+(defn parse-xhrio-response [response-channel success-callback fail-callback]
   (fn [response]
     (let [target (aget response "target")]
       (if (.isSuccess target)
         (let [json (.getResponseJson target)]
+          (put! response-channel (js->clj json :keywordize-keys true))
           (success-callback (js->clj json :keywordize-keys true)))
         (let [error (.getLastError target)]
+          (put! response-channel (js->clj error :keywordize-keys true))
           (fail-callback (js->clj error :keywordize-keys true)))))))
 
 ; wraps goog.net.XhrIo library in a simpler function xhr
 (defn xhr [{:keys [method base-url url-params on-complete on-error]}]
-  (.send
-    goog.net.XhrIo
-    (reduce
-      (fn [partial-url param-key]
-        (.appendParams
-          goog.uri.utils
-          partial-url
-          (name param-key)
-          (url-params param-key)))
-      base-url
-      (keys url-params))
-    (parse-xhrio-response on-complete on-error)
-    method))
+  (let [response-channel (chan)]
+    (.send
+      goog.net.XhrIo
+      (reduce
+        (fn [partial-url param-key]
+          (.appendParams
+            goog.uri.utils
+            partial-url
+            (name param-key)
+            (url-params param-key)))
+        base-url
+        (keys url-params))
+      (parse-xhrio-response response-channel on-complete on-error)
+      method)
+    response-channel))
 
 (defn login [facebook-id facebook-token email on-complete]
   (xhr {:method "GET"
@@ -68,7 +73,27 @@
 
 (defn get-event-subscribers [event-id on-complete]
   (xhr {:method "GET"
-       :base-url (str EVENT_URL event-id "/subscriptions")
-       :url-params (auth/get-api-credentials)
-       :on-complete on-complete
-       :on-error (fn [error] (println "[LOG] Failed to get event info"))}))
+        :base-url (str EVENT_URL event-id "/subscriptions")
+        :url-params (auth/get-api-credentials)
+        :on-complete on-complete
+        :on-error (fn [error] (println "[LOG] Failed to get event info"))}))
+
+(defn post-event-update [{:keys [id name description cover_photo_url event_map_url start_time end_time address twitter_widget_id timezone published]}]
+  (xhr {:method "POST"
+        :base-url (str EVENT_URL id)
+        :url-params (merge
+                      (auth/get-api-credentials)
+                      {"event[name]" name
+                       "event[description]" description
+                       "event[cover_photo_url]" cover_photo_url
+                       "event[event_map_url]" event_map_url
+                       "event[start_time]" start_time
+                       "event[end_time]" end_time
+                       "event[address]" address
+                       "event[twitter_widget_id]" twitter_widget_id
+                       "event[timezone]" timezone
+                       "event[published]" published })
+        :on-complete #()
+        :on-error #()
+        })
+  )

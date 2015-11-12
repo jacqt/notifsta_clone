@@ -1,4 +1,5 @@
 (ns notifsta-clone.components.event
+  (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [cljs.pprint :refer [pprint]]
@@ -7,6 +8,8 @@
             [cljsjs.jquery]
             [cljsjs.moment]
             [cljsjs.plottable]
+            [notifsta-clone.models :as models]
+            [notifsta-clone.utils.inputs :as inputs]
             [notifsta-clone.utils.auth :as auth]
             [notifsta-clone.utils.http :as http]))
 
@@ -46,76 +49,105 @@
               #js {:className "ui inverted header"}
               (:name current-event))))))))
 
+(defn submit-update [updated-event]
+  (js/console.log "updated event")
+  (http/post-event-update updated-event))
+
+(defn handle-edit-accept-click [state owner current-event temp-event _]
+  (if (:editing state)
+    (let [response-channel (submit-update temp-event)]
+      (go
+        (let [result (<! response-channel)]
+          (js/console.log (clj->js result))
+          (case (:status result)
+            "success" (do
+                        (om/update! current-event (om/value temp-event))
+                        (om/update! temp-event {})
+                        (om/set-state! owner :editing false))
+            "error"  (js/console.log "Error")) )))
+    (do
+      (om/update! temp-event (om/value current-event))
+      (om/set-state! owner :editing (-> state :editing not)))))
+
 ;; view of the details like address, time, links of event
 (defn event-content-detail-view [current-event owner]
   (reify
     om/IInitState
     (init-state [_]
-      {:editing false})
+      {:editing false })
     om/IRenderState
     (render-state [this state]
-      (dom/div
-        #js {:className "ui segment"}
-        (dom/h2 #js {:className "ui left floated header"} "Summary")
-        (if (admin? current-event)
-          (dom/div
-            #js {:className "ui right floated header"}
-            (dom/div
-              #js {:className "ui basic vertical animated button"}
-              (dom/div
-                #js {:className "hidden content"}
-                "Edit")
-              (dom/div
-                #js {:className "visible content"}
-                (dom/i
-                  #js {:className "edit icon"
-                       :style #js {:margin-right 0}})))))
+      (let [temp-event (om/observe owner (models/temp-event))]
         (dom/div
-          #js {:className "ui divided items"}
+          #js {:className "ui segment"}
+          (dom/h2 #js {:className "ui left floated header"} "Summary")
+          (if (and  (admin? current-event))
+            (dom/div
+              #js {:className "ui right floated header"}
+              (dom/div
+                #js {:className "ui basic vertical animated button"
+                     :onClick (partial handle-edit-accept-click state owner current-event temp-event)}
+                (dom/div
+                  #js {:className "hidden content"}
+                  (if (:editing state) "Accept" "Edit"))
+                (dom/div
+                  #js {:className "visible content"}
+                  (dom/i
+                    #js {:className (if (:editing state) "checkmark icon" "edit icon")
+                         :style #js {:margin-right 0}})))))
           (dom/div
-            #js {:className "item"}
+            #js {:className "ui divided items"}
             (dom/div
-              #js {:className "ui image"}
-              (dom/i #js {:className "big info icon"}))
+              #js {:className "item"}
+              (dom/div
+                #js {:className "ui image"}
+                (dom/i #js {:className "big info icon"}))
+              (dom/div
+                #js {:className "middle aligned content"}
+                (if (:editing state)
+                  (dom/div
+                    #js {:className "ui fluid input"}
+                    (om/build inputs/editable-input [temp-event {:edit-key :description
+                                                                 :className "event-description-input"
+                                                                 :placeholder-text "Event description "}]))
+                  (:description current-event)
+                  )))
             (dom/div
-              #js {:className "middle aligned content"}
-              (:description current-event)))
-          (dom/div
-            #js {:className "item"}
+              #js {:className "item"}
+              (dom/div
+                #js {:className "ui image"}
+                (dom/i #js {:className "big wait icon"}))
+              (dom/div
+                #js {:className "middle aligned content"}
+                (-> current-event :start_time js/moment. (.format "LLL"))))
             (dom/div
-              #js {:className "ui image"}
-              (dom/i #js {:className "big wait icon"}))
+              #js {:className "item"}
+              (dom/div
+                #js {:className "ui image"}
+                (dom/i #js {:className "big location arrow icon"}))
+              (dom/div
+                #js {:className "middle aligned content"}
+                (:address current-event)))
             (dom/div
-              #js {:className "middle aligned content"}
-              (-> current-event :start_time js/moment. (.format "LLL"))))
-          (dom/div
-            #js {:className "item"}
+              #js {:className "item"}
+              (dom/div
+                #js {:className "ui image"}
+                (dom/i #js {:className "big home icon"}))
+              (dom/div
+                #js {:className "middle aligned content"}
+                (dom/a
+                  #js {:href (:website_url current-event)}
+                  (:website_url current-event))))
             (dom/div
-              #js {:className "ui image"}
-              (dom/i #js {:className "big location arrow icon"}))
-            (dom/div
-              #js {:className "middle aligned content"}
-              (:address current-event)))
-          (dom/div
-            #js {:className "item"}
-            (dom/div
-              #js {:className "ui image"}
-              (dom/i #js {:className "big home icon"}))
-            (dom/div
-              #js {:className "middle aligned content"}
-              (dom/a
-                #js {:href (:website_url current-event)}
-                (:website_url current-event))))
-          (dom/div
-            #js {:className "item"}
-            (dom/div
-              #js {:className "ui image"}
-              (dom/i #js {:className "big facebook square icon"}))
-            (dom/div
-              #js {:className "middle aligned content"}
-              (dom/a
-                #js {:href (:facebook_url current-event)}
-                (:facebook_url current-event)))))))))
+              #js {:className "item"}
+              (dom/div
+                #js {:className "ui image"}
+                (dom/i #js {:className "big facebook square icon"}))
+              (dom/div
+                #js {:className "middle aligned content"}
+                (dom/a
+                  #js {:href (:facebook_url current-event)}
+                  (:facebook_url current-event))))))))))
 
 ;; view of one notification
 (defn notification-view [notification]

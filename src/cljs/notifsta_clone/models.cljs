@@ -15,10 +15,14 @@
                                       :event-address ""
                                       :start-time {}
                                       :end-time {}}
+                          :temp-event {}
                           :route nil }))
 
 (defn new-event []
   (om/ref-cursor (:new-event (om/root-cursor app-state))))
 
-(defn current-even []
+(defn current-event []
   (om/ref-cursor (:current-event (om/root-cursor app-state))))
+
+(defn temp-event []
+  (om/ref-cursor (:temp-event (om/root-cursor app-state))))

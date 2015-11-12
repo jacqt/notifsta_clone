@@ -37,7 +37,7 @@
     (render-state [_ _]
       (let [new-event (om/observe owner (models/new-event))]
         (om/build step-list-view {:steps [{:title "General" :description "Fill out some basic details"}
-                                          {:title "Images" :description "Upload your event images"} 
+                                          {:title "Images" :description "Upload your event images"}
                                           {:title "Finish!" :description "Go to your event page!"} ]
                                   :current-step-index (:current-step-index new-event)})))))
 
@@ -45,8 +45,8 @@
   (reify
     om/IRender
     (render [_]
-      (dom/div 
-        nil 
+      (dom/div
+        nil
         (dom/div
           #js {:className "field"}
           (dom/label nil "Event Name")
@@ -57,7 +57,7 @@
           #js {:className "field"}
           (dom/label nil "Event Address")
           (om/build inputs/address-autocomplete-input [new-event {:edit-key :event-address
-                                                                  :className "event-address-input"
+                                                                  :className "ui input event-address-input"
                                                                   :placeholder-text "Type your address here"}]))
         (dom/div
           #js {:className "field"}
@@ -79,8 +79,8 @@
   (reify
     om/IRender
     (render [_]
-      (dom/div 
-        nil 
+      (dom/div
+        nil
         (dom/div
           #js {:className "field"}
           (dom/label nil "Your cover photo")
@@ -107,7 +107,7 @@
             (case (:current-step-index new-event)
               0 (om/build create-event-step-1 new-event)
               1 (om/build create-event-step-2 new-event)
-              2 (dom/div nil "YOU'RE DONE")) 
+              2 (dom/div nil "YOU'RE DONE"))
             (dom/div
               #js {:className "field"}
               (dom/input

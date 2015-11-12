@@ -113,7 +113,7 @@
 
     om/IRenderState
     (render-state [this state]
-      (dom/input 
+      (dom/input
         #js {:className className
              :onChange #(handle-change % parent-state edit-key)
              :value (-> parent-state edit-key)
