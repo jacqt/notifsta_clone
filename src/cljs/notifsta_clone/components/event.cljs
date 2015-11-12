@@ -10,6 +10,9 @@
             [notifsta-clone.utils.auth :as auth]
             [notifsta-clone.utils.http :as http]))
 
+(defn admin? [event]
+  (-> event :subscription :admin))
+
 ;; View of the header; image and title of event
 (defn event-header-view [{:keys [current-event credentials]} owner]
   (reify
@@ -46,11 +49,27 @@
 ;; view of the details like address, time, links of event
 (defn event-content-detail-view [current-event owner]
   (reify
+    om/IInitState
+    (init-state [_]
+      {:editing false})
     om/IRenderState
-    (render-state [this _]
+    (render-state [this state]
       (dom/div
         #js {:className "ui segment"}
-        (dom/h2 nil "Summary")
+        (dom/h2 #js {:className "ui left floated header"} "Summary")
+        (if (admin? current-event)
+          (dom/div
+            #js {:className "ui right floated header"}
+            (dom/div
+              #js {:className "ui basic vertical animated button"}
+              (dom/div
+                #js {:className "hidden content"}
+                "Edit")
+              (dom/div
+                #js {:className "visible content"}
+                (dom/i
+                  #js {:className "edit icon"
+                       :style #js {:margin-right 0}})))))
         (dom/div
           #js {:className "ui divided items"}
           (dom/div
@@ -269,11 +288,11 @@
             #js {:className "twelve wide column row"}
             (dom/div
               #js {:className "ten wide column"}
-              (om/build event-stat-view current-event)
               (om/build event-content-detail-view current-event)
               (om/build
                 event-content-timetable-view
-                (:subevents current-event)))
+                (:subevents current-event))
+              (if (admin? current-event) (om/build event-stat-view current-event)))
             (dom/div
               #js {:className "six wide column"}
               (om/build

@@ -1,6 +1,7 @@
 (ns notifsta-clone.components.dashboard
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
+            [notifsta-clone.models :as models]
             [notifsta-clone.utils.auth :as auth]
             [notifsta-clone.utils.http :as http]))
 

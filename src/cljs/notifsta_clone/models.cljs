@@ -7,9 +7,11 @@
                           :current-event {:event-name ""
                                           :event-address ""
                                           :start-time {}
-                                          :end-time {}}
+                                          :end-time {}
+                                          }
                           :events {}
-                          :new-event {:event-name ""
+                          :new-event {:current-step-index 0
+                                      :event-name ""
                                       :event-address ""
                                       :start-time {}
                                       :end-time {}}
@@ -17,3 +19,6 @@
 
 (defn new-event []
   (om/ref-cursor (:new-event (om/root-cursor app-state))))
+
+(defn current-even []
+  (om/ref-cursor (:current-event (om/root-cursor app-state))))
