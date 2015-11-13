@@ -78,7 +78,8 @@
         :on-complete on-complete
         :on-error (fn [error] (println "[LOG] Failed to get event info"))}))
 
-(defn post-event-update [{:keys [id name description cover_photo_url event_map_url start_time end_time address twitter_widget_id timezone published]}]
+(defn post-event-update [{:keys [id name description cover_photo_url event_map_url start_time end_time
+                                 address twitter_widget_id timezone published website_url]}]
   (xhr {:method "POST"
         :base-url (str EVENT_URL id)
         :url-params (merge
@@ -92,7 +93,8 @@
                        "event[address]" address
                        "event[twitter_widget_id]" twitter_widget_id
                        "event[timezone]" timezone
-                       "event[published]" published })
+                       "event[published]" published
+                       "event[website_url]" website_url })
         :on-complete #()
         :on-error #()
         })

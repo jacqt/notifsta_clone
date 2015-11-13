@@ -3,6 +3,12 @@
             [om.dom :as dom :include-macros true]
             [notifsta-clone.utils.auth :as auth]))
 
+(defn empty-event []
+  {:event-name ""
+   :event-address ""
+   :start-time {}
+   :end-time {}})
+
 (defonce app-state (atom {:credentials (auth/get-credentials)
                           :current-event {:event-name ""
                                           :event-address ""
@@ -13,9 +19,9 @@
                           :new-event {:current-step-index 0
                                       :event-name ""
                                       :event-address ""
-                                      :start-time {}
-                                      :end-time {}}
-                          :temp-event {}
+                                      :start-time ""
+                                      :end-time ""}
+                          :temp-event (empty-event)
                           :route nil }))
 
 (defn new-event []

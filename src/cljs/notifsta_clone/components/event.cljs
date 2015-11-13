@@ -62,7 +62,7 @@
           (case (:status result)
             "success" (do
                         (om/update! current-event (om/value temp-event))
-                        (om/update! temp-event {})
+                        (om/update! temp-event (models/empty-event))
                         (om/set-state! owner :editing false))
             "error"  (js/console.log "Error")) )))
     (do
@@ -110,8 +110,7 @@
                     (om/build inputs/editable-input [temp-event {:edit-key :description
                                                                  :className "event-description-input"
                                                                  :placeholder-text "Event description "}]))
-                  (:description current-event)
-                  )))
+                  (:description current-event))))
             (dom/div
               #js {:className "item"}
               (dom/div
@@ -119,7 +118,13 @@
                 (dom/i #js {:className "big wait icon"}))
               (dom/div
                 #js {:className "middle aligned content"}
-                (-> current-event :start_time js/moment. (.format "LLL"))))
+                (if (:editing state)
+                  (dom/div
+                    #js {:className "ui fluid input"}
+                    (om/build inputs/datetime-picker-input [temp-event {:edit-key :start_time
+                                                                        :className "event-address-input ui grid"
+                                                                        :placeholder-text "Start time"}]))
+                  (-> current-event :start_time js/moment. (.format "LLL")))))
             (dom/div
               #js {:className "item"}
               (dom/div
@@ -127,7 +132,13 @@
                 (dom/i #js {:className "big location arrow icon"}))
               (dom/div
                 #js {:className "middle aligned content"}
-                (:address current-event)))
+                (if (:editing state)
+                  (dom/div
+                    #js {:className "ui fluid input"}
+                    (om/build inputs/address-autocomplete-input [temp-event {:edit-key :address
+                                                                             :className "event-address-input"
+                                                                             :placeholder-text "Event location"}]))
+                  (:address current-event))))
             (dom/div
               #js {:className "item"}
               (dom/div
@@ -135,9 +146,15 @@
                 (dom/i #js {:className "big home icon"}))
               (dom/div
                 #js {:className "middle aligned content"}
-                (dom/a
-                  #js {:href (:website_url current-event)}
-                  (:website_url current-event))))
+                (if (:editing state)
+                  (dom/div
+                    #js {:className "ui fluid input"}
+                    (om/build inputs/editable-input [temp-event {:edit-key :website_url
+                                                                 :className "event-website-url-input"
+                                                                 :placeholder-text "Your Website Homepage"}]))
+                  (dom/a
+                    #js {:href (:website_url current-event)}
+                    (:website_url current-event)))))
             (dom/div
               #js {:className "item"}
               (dom/div
@@ -145,9 +162,15 @@
                 (dom/i #js {:className "big facebook square icon"}))
               (dom/div
                 #js {:className "middle aligned content"}
-                (dom/a
-                  #js {:href (:facebook_url current-event)}
-                  (:facebook_url current-event))))))))))
+                (if (:editing state)
+                  (dom/div
+                    #js {:className "ui fluid input"}
+                    (om/build inputs/editable-input [temp-event {:edit-key :facebook_url
+                                                                 :className "event-facebook-url-input"
+                                                                 :placeholder-text "Your Facebook Page"}]))
+                  (dom/a
+                    #js {:href (:facebook_url current-event)}
+                    (:facebook_url current-event)))))))))))
 
 ;; view of one notification
 (defn notification-view [notification]

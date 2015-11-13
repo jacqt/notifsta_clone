@@ -1,6 +1,7 @@
 (ns notifsta-clone.utils.inputs
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
+            [cljsjs.moment]
             [cljsjs.jquery]
             [cljsjs.jquery-ui]
             [cljsjs.bootstrap]
@@ -53,6 +54,44 @@
                                               :edit-key edit-key
                                               :placeholder-text placeholder-text }]))))
 
+
+(defn update-timestring-date [timestring date]
+  {:pre [(some? date)]}
+  (if (= timestring "")
+    (let [timestring (-> (js/moment.) (.toISOString))]
+      (update-timestring-date timestring date))
+    (do
+      (let [moment-obj (js/moment. timestring)
+            parsed-date (js/moment. date "MM/DD/YYYY")]
+        (.date moment-obj (.date parsed-date))
+        (.month moment-obj (.month parsed-date))
+        (.year moment-obj (.year parsed-date))
+        (js/console.log (.format moment-obj "LLL"))
+        (-> moment-obj .toISOString)))))
+
+(defn update-timestring-time [timestring time]
+  {:pre [(some? time)]}
+  (if (= timestring "")
+    (let [timestring (-> (js/moment.) (.toISOString))]
+      (update-timestring-time timestring time))
+    (do
+      (let [moment-obj (js/moment. timestring)
+            parsed-time (js/moment. time "h:mm A")]
+        (.hour moment-obj (.hour parsed-time))
+        (.minute moment-obj (.minute parsed-time))
+        (-> moment-obj .toISOString)))))
+
+(defn extract-date [timestring]
+  (-> timestring js/moment. (.format "MM/DD/YYYY")))
+
+(defn extract-time [timestring]
+  (-> timestring js/moment. (.format "h:mm A")))
+
+(defn on-time-change [parent-state edit-key  update-timestring-func update-value]
+  (om/transact!
+    parent-state edit-key
+    (fn [_] (update-timestring-func (edit-key parent-state) update-value))))
+
 ;; Generic datepicker component that uses jquery-ui for the calendar view
 ;; Same API as the editable-input component above along with the min-date parameter
 (defn datepicker-input [[parent-state {:keys [className min-date placeholder-text edit-key]}] owner]
@@ -66,7 +105,7 @@
         js/$.
         (.datepicker
           #js {:minDate min-date
-               :onSelect #(om/transact! parent-state edit-key (fn [_] %)) })))
+               :onSelect (partial on-time-change parent-state edit-key update-timestring-date)})))
 
     om/IDidUpdate
     (did-update [_ _ _]
@@ -81,8 +120,7 @@
       (dom/input
         #js {:className className
              :placeholder placeholder-text
-             :onChange #(handle-change % parent-state edit-key)
-             :value (edit-key parent-state)
+             :value (-> parent-state edit-key extract-date)
              :type "text" }))))
 
 
@@ -108,20 +146,20 @@
           timepicker
           "changeTime.timepicker"
           (fn [e]
-            (om/transact! parent-state edit-key (fn [_] (.val timepicker)))))
-        (om/transact! parent-state edit-key (fn [_] (.val timepicker)))))
+            (on-time-change parent-state edit-key update-timestring-time (.val timepicker))
+            ))))
 
     om/IRenderState
     (render-state [this state]
       (dom/input
         #js {:className className
-             :onChange #(handle-change % parent-state edit-key)
-             :value (-> parent-state edit-key)
+             :onChange #(on-time-change parent-state edit-key update-timestring-time (.. % -target -value))
+             :value (-> parent-state edit-key extract-time)
              :type "text" }))))
 
 ;; Generic date and time picker. Combines the date picker and time picker components above into one
 ;; Similar API to the editable-input component
-(defn datetime-picker-input [[parent-state {:keys [className min-date placeholder-text edit-key]}] owner]
+(defn datetime-picker-input [[parent-state {:keys [className timezone min-date placeholder-text edit-key]}] owner]
   (:pre [some? parent-state])
   (reify
     om/IRenderState
@@ -130,12 +168,12 @@
         #js {:className (str "two fields " className) }
         (dom/div
           #js {:className "twelve wide field"}
-          (om/build datepicker-input [(edit-key parent-state) {:edit-key :date
-                                                               :className "start-time-input"
-                                                               :min-date min-date
-                                                               :placeholder-text placeholder-text}]))
+          (om/build datepicker-input [parent-state {:edit-key edit-key
+                                                    :className "start-time-input"
+                                                    :min-date min-date
+                                                    :placeholder-text placeholder-text}]))
         (dom/div
           #js {:className "four wide field"}
-          (om/build timepicker-input [(edit-key parent-state) {:edit-key :time
-                                                               :className "start-time-input"
-                                                               :placeholder-text placeholder-text}]))))))
+          (om/build timepicker-input [parent-state {:edit-key edit-key
+                                                    :className "start-time-input"
+                                                    :placeholder-text placeholder-text}]))))))
