@@ -82,10 +82,16 @@
         (-> moment-obj .toISOString)))))
 
 (defn extract-date [timestring]
-  (-> timestring js/moment. (.format "MM/DD/YYYY")))
+  (let [moment-obj (js/moment. timestring)]
+    (if (.isValid moment-obj)
+      (.format moment-obj "MM/DD/YYYY")
+      "")))
 
 (defn extract-time [timestring]
-  (-> timestring js/moment. (.format "h:mm A")))
+  (let [moment-obj (js/moment. timestring)]
+    (if (.isValid moment-obj)
+      (.format moment-obj "h:mm A")
+      "")))
 
 (defn on-time-change [parent-state edit-key  update-timestring-func update-value]
   (om/transact!
@@ -129,6 +135,11 @@
 (defn timepicker-input [[parent-state {:keys [className min-date placeholder-text edit-key]}] owner]
   {:pre [(some? parent-state)]}
   (reify
+
+    om/IInitState
+    (init-state [_]
+      {:caret-position 0})
+
     om/IDidMount
     (did-mount [_]
       (let
@@ -149,11 +160,23 @@
             (on-time-change parent-state edit-key update-timestring-time (.val timepicker))
             ))))
 
+    om/IShouldUpdate
+    (should-update [this [next-props _] next-state]
+      (let [cur-value (-> owner om/get-node .-value)
+            prev-value (-> next-props edit-key extract-time) ]
+        (and
+          (not (= prev-value cur-value))
+          (not (= prev-value (.join (.split cur-value ":") ":0"))))))
+    ;om/IDidUpdate
+    ;(did-update [_ _ prev-state]
+      ;(-> owner om/get-node js/$.  (.caret (:caret-position prev-state))))
+
     om/IRenderState
     (render-state [this state]
       (dom/input
         #js {:className className
-             :onChange #(on-time-change parent-state edit-key update-timestring-time (.. % -target -value))
+             :onChange #(do
+                          (on-time-change parent-state edit-key update-timestring-time (.. % -target -value)))
              :value (-> parent-state edit-key extract-time)
              :type "text" }))))
 
