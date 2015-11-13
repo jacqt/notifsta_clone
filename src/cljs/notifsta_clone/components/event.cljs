@@ -14,7 +14,7 @@
             [notifsta-clone.utils.http :as http]))
 
 ;; TODO Refactor this button out
-(defn one-two-state-button [{:keys [conditional-func on-toggle-edit on-save edit-text]} owner]
+(defn one-two-state-button [{:keys [conditional-func on-toggle-edit on-save edit-text edit-icon]} owner]
   (reify
     om/IRender
     (render [_]
@@ -41,7 +41,7 @@
           (dom/div
             #js {:className "visible content"}
             (dom/i
-              #js {:className (if (conditional-func) "cancel icon" "plus icon")
+              #js {:className (if (conditional-func) "cancel icon" (if (some? edit-icon) edit-icon "plus icon"))
                    :style #js {:margin-right 0}})))))))
 
 ;; Useful functions for this component
@@ -119,6 +119,7 @@
           (if (admin? current-event)
             (om/build one-two-state-button {:conditional-func #(:editing state)
                                             :edit-text "Edit"
+                                            :edit-icon "edit icon"
                                             :on-toggle-edit #(do
                                                                (om/update! temp-event (om/value current-event))
                                                                (om/set-state! owner :editing (-> state :editing not)))
@@ -225,12 +226,7 @@
           (om/build inputs/editable-input [state {:edit-key :notification
                                                   :className "draft-notification"
                                                   :placeholder-text "New notification" }]))
-        (dom/div #js {:className "ui divider"})
-        )
-      )
-    )
-  )
-
+        (dom/div #js {:className "ui divider"})))))
 
 (defn handle-notification-sent [draft-notification channel-id notifications]
   (let [response-channel (http/post-new-notification (:notification draft-notification) channel-id)]
@@ -312,31 +308,79 @@
               (-> timetable-segment :time name js/moment. (.format "LLL")))
             (dom/div
               #js {:className "timetable-content"}
-              (om/build-all subevent-view (:events timetable-segment)))
-            ))))))
+              (om/build-all subevent-view (:events timetable-segment)))))))))
 
+(defn draft-subevent-view [draft-subevent owner]
+  (reify
+    om/IRender
+    (render [_]
+      (dom/div
+        #js {:className "ui form twelve wide column centered segment"}
+        (dom/div
+          #js {:className "field"}
+          (dom/label nil "Event Name")
+          (om/build inputs/editable-input [draft-subevent {:edit-key :name
+                                                           :placeholder-text "Your event name"}]))
+        (dom/div
+          #js {:className "field"}
+          (dom/label nil "Location")
+          (om/build inputs/editable-input [draft-subevent {:edit-key :location
+                                                           :placeholder-text "Your event name"}]))
+        (dom/div
+          #js {:className "field"}
+          (dom/label nil "Start time")
+          (om/build inputs/datetime-picker-input [draft-subevent {:edit-key :start-time
+                                                                  :placeholder-text "Start time"}]))
+        (dom/div
+          #js {:className "field"}
+          (dom/label nil "End time")
+          (om/build inputs/datetime-picker-input [draft-subevent {:edit-key :end-time
+                                                                  :min-date (-> draft-subevent :start-time inputs/extract-date)
+                                                                  :placeholder-text "End time"}]))))))
+
+(defn handle-publish-subevent [timetable-events draft-subevent current-event-id]
+  (let [response-channel (http/post-new-subevent draft-subevent current-event-id)]
+    (go
+      (let [result (<! response-channel)]
+        (case (:status result)
+          "success" (http/get-subevents
+                      current-event-id
+                      (fn [response]
+                        (om/update! timetable-events (:data response))
+                        (om/update! draft-subevent (models/empty-subevent))))
+          "failure" (js/console.log "Error in creating subevent " (clj->js result)))))))
 
 ;; view of the list of the timetable
 (defn event-content-timetable-view [timetable-events owner]
   (reify
     om/IRenderState
     (render-state [this _]
-      (dom/div
-        #js {:className "ui segment event-timetable"}
-        (dom/h2 nil "Timetable")
-        (dom/div #js {:className "ui divider"})
+      (let [current-event (om/observe owner (models/current-event))
+            temp-subevent (om/observe owner (models/temp-subevent))]
         (dom/div
-          #js {:className "ui divided items timetable-segments"}
-          (om/build-all
-            time-segment-view
-            (map
-              (fn [key]
-                {:time key
-                 :events (key timetable-events) })
-              (sort-by
-                (fn [tstring]
-                  (-> tstring name js/moment. (.unix)))
-                (keys timetable-events)))))))))
+          #js {:className "ui segment event-timetable"}
+          (dom/h2 #js {:className "ui left floated header"} "Timetable")
+          (if (admin? current-event)
+            (om/build one-two-state-button {:conditional-func #(:drafting-subevent temp-subevent)
+                                            :on-toggle-edit #(om/update! temp-subevent :drafting-subevent (not (:drafting-subevent temp-subevent)))
+                                            :on-save #(handle-publish-subevent timetable-events temp-subevent (:id current-event))}))
+          (dom/div
+            #js {:className "timetable-container"}
+            (if (:drafting-subevent temp-subevent)
+              (om/build draft-subevent-view temp-subevent))
+            (with-out-str (pprint temp-subevent))
+            (dom/div
+              #js {:className "ui divided items timetable-segments"}
+              (om/build-all
+                time-segment-view
+                (map
+                  (fn [key]
+                    {:time key
+                     :events (key timetable-events) })
+                  (sort-by
+                    (fn [tstring]
+                      (-> tstring name js/moment. (.unix)))
+                    (keys timetable-events)))))))))))
 
 (defn sum-subscriptions [subscriptions]
   (let [sorted-subs (sort-by (fn [sub] (-> sub :created_at js/moment. (.unix))) subscriptions)]

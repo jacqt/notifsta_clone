@@ -71,6 +71,10 @@ h1.page-title {
   height: 500px;
 }
 
+.event-view .event-timetable .timetable-container {
+  margin-top: 50px;
+}
+
 /* Create event view */
 .create-event-view {
   margin-top: 50px;

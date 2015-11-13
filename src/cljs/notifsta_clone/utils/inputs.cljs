@@ -54,11 +54,16 @@
                                               :edit-key edit-key
                                               :placeholder-text placeholder-text }]))))
 
+(defn clean-timestring []
+  (let [moment-obj (js/moment.)]
+    (.seconds moment-obj 0)
+    (.milliseconds moment-obj 0)
+    (.toISOString moment-obj)))
 
 (defn update-timestring-date [timestring date]
   {:pre [(some? date)]}
   (if (= timestring "")
-    (let [timestring (-> (js/moment.) (.toISOString))]
+    (let [timestring (clean-timestring)]
       (update-timestring-date timestring date))
     (do
       (let [moment-obj (js/moment. timestring)
@@ -72,7 +77,7 @@
 (defn update-timestring-time [timestring time]
   {:pre [(some? time)]}
   (if (= timestring "")
-    (let [timestring (-> (js/moment.) (.toISOString))]
+    (let [timestring (clean-timestring)]
       (update-timestring-time timestring time))
     (do
       (let [moment-obj (js/moment. timestring)
@@ -145,9 +150,7 @@
       (let
         [timepicker
          (->
-           owner
-           om/get-node
-           js/$.
+           owner om/get-node js/$.
            (.timepicker
              #js {:minuteStep 5
                   :showInputs false

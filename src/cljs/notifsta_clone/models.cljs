@@ -13,6 +13,13 @@
   {:notification ""
    :drafting-notification false})
 
+(defn empty-subevent []
+  {:drafting-subevent false
+   :name ""
+   :location ""
+   :start-time ""
+   :end-time ""})
+
 (defonce app-state (atom {:credentials (auth/get-credentials)
                           :current-event {:event-name ""
                                           :event-address ""
@@ -27,6 +34,7 @@
                                       :end-time ""}
                           :temp-event (empty-event)
                           :temp-notification (empty-notification)
+                          :temp-subevent (empty-subevent)
                           :route nil }))
 
 (defn new-event []
@@ -40,3 +48,6 @@
 
 (defn temp-notification []
   (om/ref-cursor (:temp-notification (om/root-cursor app-state))))
+
+(defn temp-subevent []
+  (om/ref-cursor (:temp-subevent (om/root-cursor app-state))))

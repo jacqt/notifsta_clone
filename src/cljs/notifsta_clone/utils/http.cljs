@@ -79,6 +79,13 @@
         :on-complete on-complete
         :on-error (fn [error] (println "[LOG] Failed to get event info"))}))
 
+(defn get-subevents [event-id on-complete]
+  (xhr {:method "GET"
+        :base-url (str EVENT_URL event-id "/subevents")
+        :url-params (auth/get-api-credentials)
+        :on-complete on-complete
+        :on-error #(println "[LOG] Failed to get subevents") }))
+
 (defn post-event-update [{:keys [id name description cover_photo_url event_map_url start_time end_time
                                  address twitter_widget_id timezone published website_url]}]
   (xhr {:method "POST"
@@ -97,8 +104,20 @@
                        "event[published]" published
                        "event[website_url]" website_url })
         :on-complete #()
-        :on-error #()
-        }))
+        :on-error #() }))
+
+(defn post-new-subevent [{:keys [name location start-time end-time]} event-id]
+  (xhr {:method "POST"
+        :base-url (str EVENT_URL event-id "/subevents")
+        :url-params (merge
+                      (auth/get-api-credentials)
+                      {"name" name
+                       "description" ""
+                       "location" location
+                       "start_time" start-time
+                       "end_time" end-time })
+        :on-complete #()
+        :on-error #()}))
 
 (defn post-new-notification [new-notification channel-id]
   (xhr {:method "POST"
