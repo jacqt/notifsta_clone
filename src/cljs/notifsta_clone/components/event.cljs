@@ -13,8 +13,50 @@
             [notifsta-clone.utils.auth :as auth]
             [notifsta-clone.utils.http :as http]))
 
+;; TODO Refactor this button out
+(defn one-two-state-button [{:keys [conditional-func on-toggle-edit on-save edit-text]} owner]
+  (reify
+    om/IRender
+    (render [_]
+      (dom/div
+        #js {:className "ui right floated header"}
+        (if (conditional-func)
+          (dom/div
+            #js {:className "ui positive vertical animated button"
+                 :onClick on-save}
+            (dom/div
+              #js {:className "hidden content"}
+              "Submit")
+            (dom/div
+              #js {:className "visible content"}
+              (dom/i
+                #js {:className "checkmark icon"
+                     :style #js {:margin-right 0}}))))
+        (dom/div
+          #js {:className "ui basic vertical animated button"
+               :onClick on-toggle-edit}
+          (dom/div
+            #js {:className "hidden content"}
+            (if (conditional-func) "Cancel" (if (some? edit-text) edit-text "New")))
+          (dom/div
+            #js {:className "visible content"}
+            (dom/i
+              #js {:className (if (conditional-func) "cancel icon" "plus icon")
+                   :style #js {:margin-right 0}})))))))
+
+;; Useful functions for this component
 (defn admin? [event]
   (-> event :subscription :admin))
+
+;; Submits an update to an event to the server
+;; - Returns a channel to listen on
+(defn submit-update [updated-event]
+  (http/post-event-update updated-event))
+
+;; Publishes a draft notification for an event
+;; - Returns a channel to listen on
+(defn publish-draft-notification [draft-notification current-event]
+  (http/post-new-notification draft-notification current-event))
 
 ;; View of the header; image and title of event
 (defn event-header-view [{:keys [current-event credentials]} owner]
@@ -35,7 +77,8 @@
                      :href "#/" }
                 "Home")
               (dom/a
-                #js {:className "item"}
+                #js {:className "item"
+                     :href "#/create_event" }
                 "Create Event")
               (dom/div
                 #js {:className "right item"}
@@ -49,25 +92,17 @@
               #js {:className "ui inverted header"}
               (:name current-event))))))))
 
-(defn submit-update [updated-event]
-  (js/console.log "updated event")
-  (http/post-event-update updated-event))
-
-(defn handle-edit-accept-click [state owner current-event temp-event _]
-  (if (:editing state)
-    (let [response-channel (submit-update temp-event)]
-      (go
-        (let [result (<! response-channel)]
-          (js/console.log (clj->js result))
-          (case (:status result)
-            "success" (do
-                        (om/update! current-event (om/value temp-event))
-                        (om/update! temp-event (models/empty-event))
-                        (om/set-state! owner :editing false))
-            "error"  (js/console.log "Error")) )))
-    (do
-      (om/update! temp-event (om/value current-event))
-      (om/set-state! owner :editing (-> state :editing not)))))
+(defn handle-edit-accept-click [owner current-event temp-event _]
+  (let [response-channel (submit-update temp-event)]
+    (go
+      (let [result (<! response-channel)]
+        (js/console.log (clj->js result))
+        (case (:status result)
+          "success" (do
+                      (om/update! current-event (om/value temp-event))
+                      (om/update! temp-event (models/empty-event))
+                      (om/set-state! owner :editing false))
+          "error"  (js/console.log "Error")) ))))
 
 ;; view of the details like address, time, links of event
 (defn event-content-detail-view [current-event owner]
@@ -81,20 +116,13 @@
         (dom/div
           #js {:className "ui segment"}
           (dom/h2 #js {:className "ui left floated header"} "Summary")
-          (if (and  (admin? current-event))
-            (dom/div
-              #js {:className "ui right floated header"}
-              (dom/div
-                #js {:className "ui basic vertical animated button"
-                     :onClick (partial handle-edit-accept-click state owner current-event temp-event)}
-                (dom/div
-                  #js {:className "hidden content"}
-                  (if (:editing state) "Accept" "Edit"))
-                (dom/div
-                  #js {:className "visible content"}
-                  (dom/i
-                    #js {:className (if (:editing state) "checkmark icon" "edit icon")
-                         :style #js {:margin-right 0}})))))
+          (if (admin? current-event)
+            (om/build one-two-state-button {:conditional-func #(:editing state)
+                                            :edit-text "Edit"
+                                            :on-toggle-edit #(do
+                                                               (om/update! temp-event (om/value current-event))
+                                                               (om/set-state! owner :editing (-> state :editing not)))
+                                            :on-save (partial handle-edit-accept-click owner current-event temp-event)}))
           (dom/div
             #js {:className "ui divided items"}
             (dom/div
@@ -186,19 +214,62 @@
             (.fromNow (js/moment. (:created_at notification))))
           (:notification_guts notification))))))
 
-;; view of a list of notifications
-(defn event-content-notifications-view [notifications]
+(defn draft-notification-view [state owner]
   (reify
-    om/IRenderState
-    (render-state [this _]
-    (dom/div
-      #js {:className "ui segment event-notifications"}
-      (dom/h2 nil  "Notifications")
-      (dom/div #js {:className "ui divider"})
+    om/IRender
+    (render [_]
       (dom/div
-        #js {:className "ui divided items notification-list"}
-        (om/build-all notification-view notifications))
-      ))))
+        #js {}
+        (dom/div
+          #js {:className "ui fluid input"}
+          (om/build inputs/editable-input [state {:edit-key :notification
+                                                  :className "draft-notification"
+                                                  :placeholder-text "New notification" }]))
+        (dom/div #js {:className "ui divider"})
+        )
+      )
+    )
+  )
+
+
+(defn handle-notification-sent [draft-notification channel-id notifications]
+  (let [response-channel (http/post-new-notification (:notification draft-notification) channel-id)]
+    (go
+      (let [result (<! response-channel)]
+        (case (:status result)
+          "success" (do
+                      (om/update! draft-notification (models/empty-notification))
+                      (om/update! notifications (cons (:data result) notifications )))
+          "error" (js/console.log "Error in sending notification" (clj->js result)))))))
+
+;; view of a list of notifications
+(defn event-content-notifications-view [notifications owner]
+  (reify
+    om/IInitState
+    (init-state [_]
+      {:drafting-notification false})
+    om/IRenderState
+    (render-state [this state]
+      (let [current-event (om/observe owner (models/current-event))
+            temp-notification (om/observe owner (models/temp-notification))]
+        (dom/div
+          #js {:className "ui segment event-notifications"}
+          (dom/div
+            nil
+            (dom/h2 #js {:className "ui left floated header"} "Notifications")
+            (if (admin? current-event)
+              (om/build one-two-state-button {:conditional-func #(:drafting-notification temp-notification)
+                                              :on-toggle-edit #(om/update! temp-notification :drafting-notification (not (:drafting-notification temp-notification)))
+                                              :on-save #(handle-notification-sent temp-notification (-> current-event :channels first :id) notifications) })
+              ))
+          (dom/div
+            #js {:className "notification-content"}
+            (if (:drafting-notification temp-notification)
+              (om/build draft-notification-view temp-notification))
+            (dom/div
+              #js {:className "ui divided items notification-list"}
+              (om/build-all notification-view notifications)))
+          )))))
 
 (defn subevent-view [subevent owner]
   (reify
@@ -349,13 +420,14 @@
                 (:subevents current-event))
               (if (admin? current-event) (om/build event-stat-view current-event)))
             (dom/div
-              #js {:className "six wide column"}
+              #js {:className "six wide column row"}
               (om/build
                 event-content-notifications-view
                 (-> current-event :channels first :notifications)))))
         (dom/pre
           nil
-          (with-out-str (pprint @current-event)))))))
+          (with-out-str (pprint @current-event)))
+        ))))
 
 ;; This is the view that is used to show the event page
 (defn event-view [{:keys [current-event credentials]} owner]

@@ -51,7 +51,12 @@ h1.page-title {
   margin-top: 30px;
 }
 
-.event-view .event-content .event-notifications .notification-list {
+
+.event-view .event-content .event-notifications .notification-content {
+  margin-top: 50px;
+}
+
+.event-view .event-content .event-notifications .notification-content .notification-list {
   max-height: 500px;
   overflow-y: scroll;
 }

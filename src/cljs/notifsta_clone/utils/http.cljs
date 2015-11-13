@@ -10,6 +10,7 @@
 (def LOGIN_URL (str BASE_URL "/auth/facebook"))
 (def USER_URL (str BASE_URL "/users/"))
 (def EVENT_URL (str BASE_URL "/events/"))
+(def CHANNEL_URL (str BASE_URL "/channels/"))
 
 ; parses goog.net.XhrIo response to a json
 (defn parse-xhrio-response [response-channel success-callback fail-callback]
@@ -97,5 +98,15 @@
                        "event[website_url]" website_url })
         :on-complete #()
         :on-error #()
-        })
-  )
+        }))
+
+(defn post-new-notification [new-notification channel-id]
+  (xhr {:method "POST"
+        :base-url (str CHANNEL_URL channel-id "/notifications")
+        :url-params (merge
+                      (auth/get-api-credentials)
+                      {"notification[notification_guts]" new-notification
+                       "notification[type]" "Message"})
+        :on-complete #()
+        :on-error #()
+        }))

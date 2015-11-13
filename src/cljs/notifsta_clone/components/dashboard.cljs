@@ -32,6 +32,7 @@
   (reify
     om/IRenderState
     (render-state [this _]
+      (js/console.log (clj->js (:subscribed events)))
       (dom/div
         #js {:className "dashboard-view"}
         (dom/div
