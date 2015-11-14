@@ -51,6 +51,22 @@ h1.page-title {
   margin-top: 30px;
 }
 
+.event-view .event-content .summary-content .datetime-pickers{
+  margin-top: 0;
+  margin-bottom: 0;
+  margin-left: 0;
+}
+
+.event-view .event-content .summary-content .datetime-pickers .field{
+  margin-bottom: 5px;
+  padding-right: 5px;
+}
+
+.event-view .event-content .summary-content .datetime-pickers .four.wide.field{
+  margin-bottom: 5px;
+  padding-right: 5px;
+  padding-left: 0;
+}
 
 .event-view .event-content .event-notifications .notification-content {
   margin-top: 50px;

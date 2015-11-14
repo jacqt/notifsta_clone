@@ -109,12 +109,12 @@
   (reify
     om/IInitState
     (init-state [_]
-      {:editing false })
+      {:editing true })
     om/IRenderState
     (render-state [this state]
       (let [temp-event (om/observe owner (models/temp-event))]
         (dom/div
-          #js {:className "ui segment"}
+          #js {:className "ui segment summary-content"}
           (dom/h2 #js {:className "ui left floated header"} "Summary")
           (if (admin? current-event)
             (om/build one-two-state-button {:conditional-func #(:editing state)
@@ -149,11 +149,27 @@
                 #js {:className "middle aligned content"}
                 (if (:editing state)
                   (dom/div
-                    #js {:className "ui fluid input"}
-                    (om/build inputs/datetime-picker-input [temp-event {:edit-key :start_time
-                                                                        :className "event-address-input ui grid"
-                                                                        :placeholder-text "Start time"}]))
-                  (-> current-event :start_time js/moment. (.format "LLL")))))
+                    #js {:className "ui grid datetime-pickers"}
+                    (dom/div
+                      #js {:className "row"}
+                      (dom/div
+                        #js {:className "ui fluid input"}
+                        (om/build inputs/datetime-picker-input [temp-event {:edit-key :start_time
+                                                                            :className "ui grid"
+                                                                            :placeholder-text "Start time"}])))
+                    (dom/div
+                      #js {:className "row"}
+                      (dom/div
+                        #js {:className "ui fluid input"}
+                        (om/build inputs/datetime-picker-input [temp-event {:edit-key :end_time
+                                                                            :className "ui grid"
+                                                                            :placeholder-text "End time"}]))))
+                  (dom/p
+                    #js {}
+                    (-> current-event :start_time js/moment. (.format "LLL"))
+                    " - "
+                    (-> current-event :end_time js/moment. (.format "LLL")))
+                  )))
             (dom/div
               #js {:className "item"}
               (dom/div

@@ -48,11 +48,6 @@
           (dom/h2 nil "Not subscribed")
           (dom/div
             #js {:className "ui link four stackable cards event-cards"}
-            (om/build-all event-card-view (:not_subscribed events)))
-          (dom/button
-            #js {:className "ui button"
-                 :onClick (fn [e] (auth/logout credentials))}
-            "Click here to logout")
-          (dom/input
-            #js {:className "dashboard-input"
-                 :placeholder "Enter your friend's name!"}))))))
+            (om/build-all event-card-view (filter
+                                            #(:published %)
+                                            (:not_subscribed events)))))))))
