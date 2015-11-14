@@ -55,6 +55,12 @@
                                                       :placeholder-text "Your event name"}]))
         (dom/div
           #js {:className "field"}
+          (dom/label nil "Description")
+          (om/build inputs/editable-input [new-event {:edit-key :description
+                                                      :className "event-description-input"
+                                                      :placeholder-text "Event description"}]))
+        (dom/div
+          #js {:className "field"}
           (dom/label nil "Event Address")
           (om/build inputs/address-autocomplete-input [new-event {:edit-key :event-address
                                                                   :className "ui input event-address-input"

@@ -62,7 +62,7 @@
 
 (defn update-timestring-date [timestring date]
   {:pre [(some? date)]}
-  (if (= timestring "")
+  (if (not (.isValid (js/moment. timestring)))
     (let [timestring (clean-timestring)]
       (update-timestring-date timestring date))
     (do
@@ -71,12 +71,11 @@
         (.date moment-obj (.date parsed-date))
         (.month moment-obj (.month parsed-date))
         (.year moment-obj (.year parsed-date))
-        (js/console.log (.format moment-obj "LLL"))
         (-> moment-obj .toISOString)))))
 
 (defn update-timestring-time [timestring time]
   {:pre [(some? time)]}
-  (if (= timestring "")
+  (if (not (.isValid (js/moment. timestring)))
     (let [timestring (clean-timestring)]
       (update-timestring-time timestring time))
     (do

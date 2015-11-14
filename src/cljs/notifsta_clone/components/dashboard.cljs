@@ -6,7 +6,6 @@
             [notifsta-clone.utils.http :as http]))
 
 (defn enter-event-view [event]
-  (pr (str "Entering event: " (:name event)))
   (set! js/window.location.hash (str "/event/" (:id event))))
 
 (defn event-card-view [event owner]

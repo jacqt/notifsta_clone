@@ -6,8 +6,9 @@
 (defn empty-event []
   {:event-name ""
    :event-address ""
-   :start-time ""
-   :end-time ""})
+   :start_time ""
+   :description ""
+   :end_time ""})
 
 (defn empty-notification []
   {:notification ""
