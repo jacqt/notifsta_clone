@@ -4,10 +4,10 @@
             [notifsta-clone.utils.auth :as auth]))
 
 (defn empty-event []
-  {:event-name ""
-   :event-address ""
-   :start_time ""
+  {:name ""
    :description ""
+   :address ""
+   :start_time ""
    :end_time ""})
 
 (defn empty-notification []
@@ -18,21 +18,21 @@
   {:drafting-subevent false
    :name ""
    :location ""
-   :start-time ""
-   :end-time ""})
+   :start_time ""
+   :end_time ""})
 
 (defonce app-state (atom {:credentials (auth/get-credentials)
-                          :current-event {:event-name ""
-                                          :event-address ""
-                                          :start-time {}
-                                          :end-time {}
-                                          }
+                          :current-event {:name ""
+                                          :description ""
+                                          :address ""
+                                          :start_time ""
+                                          :end_time "" }
                           :events {}
                           :new-event {:current-step-index 0
                                       :event-name ""
                                       :event-address ""
-                                      :start-time ""
-                                      :end-time ""}
+                                      :start_time ""
+                                      :end_time ""}
                           :temp-event (empty-event)
                           :temp-notification (empty-notification)
                           :temp-subevent (empty-subevent)
