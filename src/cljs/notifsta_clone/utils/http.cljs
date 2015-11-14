@@ -87,6 +87,20 @@
         :on-complete on-complete
         :on-error #(println "[LOG] Failed to get subevents") }))
 
+(defn post-new-event [{:keys [name description start_time end_time timezone address]} on-complete]
+  (xhr {:method "POST"
+        :base-url EVENT_URL
+        :url-params (merge
+                      (auth/get-api-credentials)
+                      {"event[name]" name
+                       "event[description]" description
+                       "event[start_time]" start_time
+                       "event[end_time]" end_time
+                       "event[address]" address
+                       "event[timezone]" timezone})
+        :on-complete on-complete
+        :on-error #()}))
+
 (defn post-event-update [{:keys [id name description cover_photo_url event_map_url start_time end_time
                                  address twitter_widget_id timezone published website_url]}]
   (xhr {:method "POST"

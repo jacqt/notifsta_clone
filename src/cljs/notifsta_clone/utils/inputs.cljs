@@ -37,7 +37,7 @@
 
 ;; Generic component for using google places autocomplete input
 ;; Same API as the editable-input component above
-(defn address-autocomplete-input [[parent-state {:keys [className edit-key placeholder-text]}] owner]
+(defn address-autocomplete-input [[parent-state {:keys [className edit-key placeholder-text lat-key long-key]}] owner] 
   {:pre [(some? parent-state)]}
   (reify
     om/IDidMount
@@ -47,7 +47,12 @@
           (.addListener
             autocomplete
             "place_changed"
-            #(om/transact! parent-state edit-key (fn [_] (.-value address-input)))))))
+            (fn []
+              (if (and (some? lat-key) (some? long-key))
+                (let [place (.getPlace autocomplete)]
+                  (om/transact! parent-state lat-key (fn [_] (.lat (.. place -geometry -location))))
+                  (om/transact! parent-state long-key (fn [_] (.lng (.. place -geometry -location))))))
+              (om/transact! parent-state edit-key (fn [_] (.-value address-input))))))))
     om/IRenderState
     (render-state [_ _]
       (om/build editable-input [parent-state {:className className
