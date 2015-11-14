@@ -1,11 +1,14 @@
 (ns notifsta-clone.components.create-event
+  (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [cljs.pprint :refer [pprint]]
             [notifsta-clone.models :as models]
             [notifsta-clone.utils.auth :as auth]
             [notifsta-clone.utils.inputs :as inputs]
-            [notifsta-clone.utils.http :as http]))
+            [notifsta-clone.utils.http :as http]
+            [notifsta-clone.router :as router]
+            ))
 
 (def required-fields-1 [:name :description :address :start_time :end_time])
 
@@ -29,7 +32,7 @@
     om/IRenderState
     (render-state [_ _]
       (dom/div
-        #js {:className "ui ordered steps"}
+        #js {:className "ui ordered steps center fluid"}
         (om/build-all step-view (map (fn [step] (merge step {:completed true})) (take current-step-index steps)))
         (om/build-all step-view (map (fn [step] (merge step {:completed false})) (drop current-step-index steps)))))))
 
@@ -75,11 +78,8 @@
                                       (case (:status response)
                                         "success" (om/update! new-event (merge (:data response) {:current-step-index 1}))
                                         "failure" (do
-                                                    (js/console.log "Failed to creat event" )
-                                                    (om/transact! new-event :errors (fn [_] (:error response))))))))
-                   }
-          )
-        )
+                                                    (js/console.log "Failed to create event" )
+                                                    (om/transact! new-event :errors (fn [_] (:error response))))))))}))
 
       (om/transact! new-event :errors (fn [_] (.slice error-msg 0 -2))))))
 
@@ -126,11 +126,18 @@
         (dom/div
           #js {:className "field"}
           (dom/input
-            #js {:className "ui button"
+            #js {:className "ui positive button"
                  :onClick #(validate-form-1 new-event)
                  :type "button"
-                 :value "Next" }))))))
+                 :value "Submit" }))))))
 
+(defn handle-photo-url-update [new-event]
+  (let [response-channel (http/post-event-update new-event)]
+    (go
+      (let [result (<! response-channel)]
+        (case (:status result)
+          "success" (om/transact! new-event :current-step-index inc)
+          "error"  (om/transact! new-event :errors (fn [_] (:error result))))))))
 
 (defn create-event-step-2 [new-event owner]
   (reify
@@ -141,15 +148,46 @@
         (dom/div
           #js {:className "field"}
           (dom/label nil "Your cover photo")
-          (om/build inputs/editable-input [new-event {:edit-key :event-name
+          (om/build inputs/editable-input [new-event {:edit-key :cover_photo_url
                                                       :className "event-name-input"
-                                                      :placeholder-text "Your event name"}]))
+                                                      :placeholder-text "URL of your cover photo"}]))
         (dom/div
           #js {:className "field"}
-          (dom/label nil "Your asdfasdf")
-          (om/build inputs/address-autocomplete-input [new-event {:edit-key :event-address
+          (dom/label nil "Your event map url")
+          (om/build inputs/address-autocomplete-input [new-event {:edit-key :event_map_url
                                                                   :className "event-address-input"
-                                                                  :placeholder-text "Type your address here"}]))))))
+                                                                  :placeholder-text "URL of the image of your event map"}]))
+        (dom/div
+          #js {:className "field"}
+          (dom/input
+            #js {:className "ui button"
+                 :onClick (fn [e] (om/transact! new-event :current-step-index inc))
+                 :type "button"
+                 :value "Skip" })
+          (dom/input
+            #js {:className "ui positive button"
+                 :onClick #(handle-photo-url-update new-event)
+                 :type "button"
+                 :value "Submit" }))))))
+
+(defn final-message [new-event owner]
+  (reify
+    om/IRender
+    (render [_]
+      (dom/div
+        nil
+        (dom/h3 #js {:className "page-title"} "Congratulations, you've created your event!" )
+        (dom/p nil "We're excited to have you use our app for you event. Here's a brief list of what your next steps can be:")
+        (dom/ul nil
+          (dom/li nil "Send push notifications to your users")
+          (dom/li nil "Create a timetable for your event")
+          (dom/li nil "Customize your app with links to your homepage or Facebook page"))
+        (dom/a
+          #js {:className "ui big positive button"
+               :href (str "#/event/" (:id new-event))}
+          "Lets get started!"
+          )))))
+
 (defn create-event-form-view [_ owner]
   (reify
     om/IRenderState
@@ -164,24 +202,10 @@
             (case (:current-step-index new-event)
               0 (om/build create-event-step-1 new-event)
               1 (om/build create-event-step-2 new-event)
-              2 (dom/div nil "YOU'RE DONE"))
+              2 (om/build final-message new-event))
             (dom/div
               #js {:className "error field"}
-              (:errors new-event))
-            ;(dom/div
-              ;#js {:className "field"}
-              ;(if (> (:current-step-index new-event) 0)
-                ;(dom/input
-                  ;#js {:className "ui button"
-                       ;:onClick (fn [e] (om/transact! new-event :current-step-index dec))
-                       ;:type "button"
-                       ;:value "Back" }))
-              ;(if (< (:current-step-index new-event) 3) (dom/input
-                ;#js {:className "ui button"
-                     ;:onClick (fn [e] (om/transact! new-event :current-step-index inc))
-                     ;:type "button"
-                     ;:value "Next" })))
-            (dom/pre nil (with-out-str (pprint @new-event)))))))))
+              (:errors new-event))))))))
 
 
 (defn create-event-view [_ owner]

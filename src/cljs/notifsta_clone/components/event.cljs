@@ -96,20 +96,19 @@
   (let [response-channel (submit-update temp-event)]
     (go
       (let [result (<! response-channel)]
-        (js/console.log (clj->js result))
         (case (:status result)
           "success" (do
                       (om/update! current-event (om/value temp-event))
                       (om/update! temp-event (models/empty-event))
                       (om/set-state! owner :editing false))
-          "error"  (js/console.log "Error")) ))))
+          "error"  (js/console.log "Error"))))))
 
 ;; view of the details like address, time, links of event
 (defn event-content-detail-view [current-event owner]
   (reify
     om/IInitState
     (init-state [_]
-      {:editing true })
+      {:editing false })
     om/IRenderState
     (render-state [this state]
       (let [temp-event (om/observe owner (models/temp-event))]
@@ -292,7 +291,7 @@
 (defn handle-publish-subevent [timetable-events draft-subevent current-event-id]
   (js/console.log (:id draft-subevent))
   (let [response-channel (if (some? (:id draft-subevent))
-                           (http/post-update-subevent draft-subevent)
+                           (http/post-subevent-update draft-subevent)
                            (http/post-new-subevent draft-subevent current-event-id))]
     (go (let [result (<! response-channel)]
           (case (:status result)

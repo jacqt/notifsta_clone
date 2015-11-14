@@ -134,7 +134,7 @@
         :on-complete #()
         :on-error #()}))
 
-(defn post-update-subevent [{:keys [id name location start_time end_time]}]
+(defn post-subevent-update [{:keys [id name location start_time end_time]}]
   (xhr {:method "POST"
         :base-url (str SUBEVENT_URL id)
         :url-params (merge

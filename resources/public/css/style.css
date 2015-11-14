@@ -42,6 +42,10 @@ h1.page-title {
   height: 250px;
 }
 
+.ui.large.secondary.inverted.pointing.menu {
+  border: none;
+}
+
 /* Event view */
 .event-view  .masthead.segment {
   height: 200px;
@@ -115,4 +119,8 @@ h1.page-title {
 .create-event-view {
   margin-top: 50px;
   height: 700px;
+}
+
+.create-event-view .error.field{
+  color: red;
 }
