@@ -67,6 +67,26 @@ h1.page-title {
   overflow-x: hidden;
 }
 
+.event-view .event-content .event-timetable .timetable-segments .subevent-view {
+  transition: .1s;
+  border: 1px solid white;
+}
+
+.event-view .event-content .event-timetable .timetable-segments .subevent-view.admin:hover {
+  margin-left: 1px;
+  margin-right: 1px;
+  border: 1px solid grey;
+  cursor: pointer;
+}
+
+.event-view .event-content .event-timetable .timetable-segments .subevent-view.admin .delete-button{
+  display: none;
+}
+
+.event-view .event-content .event-timetable .timetable-segments .subevent-view.admin:hover .delete-button {
+  display: block;
+}
+
 .event-view .event-content .event-stats .stat-sub-graph {
   height: 500px;
 }

@@ -11,6 +11,7 @@
 (def USER_URL (str BASE_URL "/users/"))
 (def EVENT_URL (str BASE_URL "/events/"))
 (def CHANNEL_URL (str BASE_URL "/channels/"))
+(def SUBEVENT_URL (str BASE_URL "/subevents/"))
 
 ; parses goog.net.XhrIo response to a json
 (defn parse-xhrio-response [response-channel success-callback fail-callback]
@@ -106,7 +107,7 @@
         :on-complete #()
         :on-error #() }))
 
-(defn post-new-subevent [{:keys [name location start-time end-time]} event-id]
+(defn post-new-subevent [{:keys [name location start_time end_time]} event-id]
   (xhr {:method "POST"
         :base-url (str EVENT_URL event-id "/subevents")
         :url-params (merge
@@ -114,8 +115,21 @@
                       {"name" name
                        "description" ""
                        "location" location
-                       "start_time" start-time
-                       "end_time" end-time })
+                       "start_time" start_time
+                       "end_time" end_time })
+        :on-complete #()
+        :on-error #()}))
+
+(defn post-update-subevent [{:keys [id name location start_time end_time]}]
+  (xhr {:method "POST"
+        :base-url (str SUBEVENT_URL id)
+        :url-params (merge
+                      (auth/get-api-credentials)
+                      {"name" name
+                       "description" ""
+                       "location" location
+                       "start_time" start_time
+                       "end_time" end_time })
         :on-complete #()
         :on-error #()}))
 
@@ -127,5 +141,11 @@
                       {"notification[notification_guts]" new-notification
                        "notification[type]" "Message"})
         :on-complete #()
-        :on-error #()
-        }))
+        :on-error #() }))
+
+(defn delete-subevent [subevent-id]
+  (xhr {:method "DELETE"
+        :base-url (str SUBEVENT_URL subevent-id)
+        :url-params (auth/get-api-credentials)
+        :on-complete #()
+        :on-error #()}))

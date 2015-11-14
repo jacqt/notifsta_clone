@@ -267,30 +267,81 @@
               (om/build-all notification-view notifications)))
           )))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; TIMETABLE COMPONENT ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn handle-publish-subevent [timetable-events draft-subevent current-event-id]
+  (js/console.log (:id draft-subevent))
+  (let [response-channel (if (some? (:id draft-subevent))
+                           (http/post-update-subevent draft-subevent)
+                           (http/post-new-subevent draft-subevent current-event-id))]
+    (go (let [result (<! response-channel)]
+          (case (:status result)
+            "success" (http/get-subevents
+                        current-event-id
+                        (fn [response]
+                          (om/update! timetable-events (:data response))
+                          (om/update! draft-subevent (models/empty-subevent))))
+            "failure" (js/console.log "Error in creating subevent " (clj->js result)))))))
+
+(defn delete-subevent [current-event subevent-id]
+  (let [response-channel (http/delete-subevent subevent-id)]
+    (go (let [result (<! response-channel)]
+          (case (:status result)
+            "success" (http/get-subevents (:id current-event) (fn [response] (om/update! (:subevents current-event) (:data response))))
+            "failure" (js/console.log "Error in deleting subevent " (clj->js result)))))) )
+
 (defn subevent-view [subevent owner]
   (reify
+    om/IInitState
+    (init-state [_]
+      {:moused-over false})
     om/IRenderState
     (render-state [this _]
-      (dom/div
-        #js {:className "ui grid"}
+      (let [current-event (om/observe owner (models/current-event))
+            temp-event (om/observe owner (models/temp-subevent)) ]
         (dom/div
-          #js {:className "two wide column"}
-          (dom/b
-            nil
-            (-> subevent :start_time js/moment. (.format "hh:mm")))
-          (dom/p
-            nil
-            (-> subevent :end_time js/moment. (.format "hh:mm"))))
-        (dom/div
-          #js {:className "ten wide column"}
-          (dom/b
-            nil
-            (:name subevent))
+          #js {:className (str "ui grid subevent-view " (if (admin? current-event) "admin"))
+               :onClick #(if (admin? current-event)
+                           (do
+                             (om/update! temp-event (om/value subevent))  
+                             (om/update! temp-event :drafting-subevent true)))}
           (dom/div
-            nil
-            (dom/i #js {:className "marker icon"})
-            (:location subevent))
-          )))))
+            #js {:className "two wide column"}
+            (dom/b
+              nil
+              (-> subevent :start_time js/moment. (.format "hh:mm")))
+            (dom/p
+              nil
+              (-> subevent :end_time js/moment. (.format "hh:mm"))))
+          (dom/div
+            #js {:className "eleven wide column"}
+            (dom/b
+              nil
+              (:name subevent))
+            (dom/div
+              nil
+              (dom/i #js {:className "marker icon"})
+              (:location subevent)))
+          (if (admin? current-event)
+            (dom/div
+              #js {:className "one wide column delete-button"}
+              (dom/div
+                #js {:className "ui basic vertical animated button" 
+                     :onClick #(do
+                                 (delete-subevent current-event (:id subevent))
+                                 (.stopPropagation %))}
+                (dom/div
+                  #js {:className "hidden content"}
+                  "Delete")
+                (dom/div
+                  #js {:className "visible content"}
+                  (dom/i
+                    #js {:className "trash icon"
+                         :style #js {:margin-right 0}}))))))))))
 
 ;; view for a time segment in the timetable
 (defn time-segment-view [timetable-segment owner]
@@ -325,30 +376,18 @@
           #js {:className "field"}
           (dom/label nil "Location")
           (om/build inputs/editable-input [draft-subevent {:edit-key :location
-                                                           :placeholder-text "Your event name"}]))
+                                                           :placeholder-text "Location"}]))
         (dom/div
           #js {:className "field"}
           (dom/label nil "Start time")
-          (om/build inputs/datetime-picker-input [draft-subevent {:edit-key :start-time
+          (om/build inputs/datetime-picker-input [draft-subevent {:edit-key :start_time
                                                                   :placeholder-text "Start time"}]))
         (dom/div
           #js {:className "field"}
           (dom/label nil "End time")
-          (om/build inputs/datetime-picker-input [draft-subevent {:edit-key :end-time
-                                                                  :min-date (-> draft-subevent :start-time inputs/extract-date)
+          (om/build inputs/datetime-picker-input [draft-subevent {:edit-key :end_time
+                                                                  :min-date (-> draft-subevent :start_time inputs/extract-date)
                                                                   :placeholder-text "End time"}]))))))
-
-(defn handle-publish-subevent [timetable-events draft-subevent current-event-id]
-  (let [response-channel (http/post-new-subevent draft-subevent current-event-id)]
-    (go
-      (let [result (<! response-channel)]
-        (case (:status result)
-          "success" (http/get-subevents
-                      current-event-id
-                      (fn [response]
-                        (om/update! timetable-events (:data response))
-                        (om/update! draft-subevent (models/empty-subevent))))
-          "failure" (js/console.log "Error in creating subevent " (clj->js result)))))))
 
 ;; view of the list of the timetable
 (defn event-content-timetable-view [timetable-events owner]
@@ -362,13 +401,14 @@
           (dom/h2 #js {:className "ui left floated header"} "Timetable")
           (if (admin? current-event)
             (om/build one-two-state-button {:conditional-func #(:drafting-subevent temp-subevent)
-                                            :on-toggle-edit #(om/update! temp-subevent :drafting-subevent (not (:drafting-subevent temp-subevent)))
+                                            :on-toggle-edit #(if (:drafting-subevent temp-subevent) 
+                                                               (om/update! temp-subevent (models/empty-subevent))
+                                                               (om/update! temp-subevent :drafting-subevent (not (:drafting-subevent temp-subevent))))
                                             :on-save #(handle-publish-subevent timetable-events temp-subevent (:id current-event))}))
           (dom/div
             #js {:className "timetable-container"}
             (if (:drafting-subevent temp-subevent)
               (om/build draft-subevent-view temp-subevent))
-            (with-out-str (pprint temp-subevent))
             (dom/div
               #js {:className "ui divided items timetable-segments"}
               (om/build-all
@@ -468,9 +508,9 @@
               (om/build
                 event-content-notifications-view
                 (-> current-event :channels first :notifications)))))
-        (dom/pre
-          nil
-          (with-out-str (pprint @current-event)))
+        ;(dom/pre
+          ;nil
+          ;(with-out-str (pprint @current-event)))
         ))))
 
 ;; This is the view that is used to show the event page

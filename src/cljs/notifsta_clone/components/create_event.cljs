@@ -62,16 +62,16 @@
         (dom/div
           #js {:className "field"}
           (dom/label nil "Start time")
-          (om/build inputs/datetime-picker-input [new-event {:edit-key :start-time
+          (om/build inputs/datetime-picker-input [new-event {:edit-key :start_time
                                                              :min-date 0
-                                                             :className "start-time-input"
+                                                             :className "start_time-input"
                                                              :placeholder-text "Start time"}]))
         (dom/div
           #js {:className "field"}
           (dom/label nil "End time")
-          (om/build inputs/datetime-picker-input [new-event {:edit-key :end-time
-                                                             :min-date (-> new-event :start-time :date)
-                                                             :className "end-time-input"
+          (om/build inputs/datetime-picker-input [new-event {:edit-key :end_time
+                                                             :min-date (-> new-event :start_time :date)
+                                                             :className "end_time-input"
                                                              :placeholder-text "End time"}]))))))
 
 
