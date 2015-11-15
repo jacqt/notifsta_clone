@@ -154,9 +154,9 @@
         (dom/div
           #js {:className "field"}
           (dom/label nil "Your event map url")
-          (om/build inputs/address-autocomplete-input [new-event {:edit-key :event_map_url
-                                                                  :className "event-address-input"
-                                                                  :placeholder-text "URL of the image of your event map"}]))
+          (om/build inputs/editable-input [new-event {:edit-key :event_map_url
+                                                      :className "event-address-input"
+                                                      :placeholder-text "URL of the image of your event map"}]))
         (dom/div
           #js {:className "field"}
           (dom/input
@@ -185,8 +185,7 @@
         (dom/a
           #js {:className "ui big positive button"
                :href (str "#/event/" (:id new-event))}
-          "Lets get started!"
-          )))))
+          "Lets get started!")))))
 
 (defn create-event-form-view [_ owner]
   (reify

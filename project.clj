@@ -10,6 +10,7 @@
 
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [org.clojure/clojurescript "1.7.122" :scope "provided"]
+                 [org.clojure/core.async "0.2.374"]
                  [ring "1.4.0"]
                  [ring/ring-defaults "0.1.5"]
                  [slester/ring-browser-caching "0.1.1"]
@@ -21,11 +22,13 @@
                  [cljsjs/bootstrap "3.3.5-0"]
                  [cljsjs/bootstrap-timepicker "0.5.1-0"]
                  [cljsjs/d3 "3.5.5-3"]
+                 [cljsjs/facebook "v20150729-0"]
                  [cljsjs/google-maps "3.18-1"]
                  [cljsjs/jquery "1.9.1-0"]
                  [cljsjs/jquery-ui "1.11.3-1"]
                  [cljsjs/moment "2.10.6-0"]
                  [cljsjs/plottable "1.12.0-0"]
+                 [cljsjs/highcharts "4.1.8-1"]
                  [environ "1.0.0"]]
 
   :plugins [[lein-cljsbuild "1.0.5"]

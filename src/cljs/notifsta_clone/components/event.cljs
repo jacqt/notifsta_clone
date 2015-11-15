@@ -289,7 +289,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn handle-publish-subevent [timetable-events draft-subevent current-event-id]
-  (js/console.log (:id draft-subevent))
   (let [response-channel (if (some? (:id draft-subevent))
                            (http/post-subevent-update draft-subevent)
                            (http/post-new-subevent draft-subevent current-event-id))]
@@ -322,7 +321,7 @@
           #js {:className (str "ui grid subevent-view " (if (admin? current-event) "admin"))
                :onClick #(if (admin? current-event)
                            (do
-                             (om/update! temp-event (om/value subevent))  
+                             (om/update! temp-event (om/value subevent))
                              (om/update! temp-event :drafting-subevent true)))}
           (dom/div
             #js {:className "two wide column"}
@@ -345,7 +344,7 @@
             (dom/div
               #js {:className "one wide column delete-button"}
               (dom/div
-                #js {:className "ui basic vertical animated button" 
+                #js {:className "ui basic vertical animated button"
                      :onClick #(do
                                  (delete-subevent current-event (:id subevent))
                                  (.stopPropagation %))}
@@ -416,7 +415,7 @@
           (dom/h2 #js {:className "ui left floated header"} "Timetable")
           (if (admin? current-event)
             (om/build one-two-state-button {:conditional-func #(:drafting-subevent temp-subevent)
-                                            :on-toggle-edit #(if (:drafting-subevent temp-subevent) 
+                                            :on-toggle-edit #(if (:drafting-subevent temp-subevent)
                                                                (om/update! temp-subevent (models/empty-subevent))
                                                                (om/update! temp-subevent :drafting-subevent (not (:drafting-subevent temp-subevent))))
                                             :on-save #(handle-publish-subevent timetable-events temp-subevent (:id current-event))}))

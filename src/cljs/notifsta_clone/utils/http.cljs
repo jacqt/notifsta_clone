@@ -102,7 +102,7 @@
         :on-error #()}))
 
 (defn post-event-update [{:keys [id name description cover_photo_url event_map_url start_time end_time
-                                 address twitter_widget_id timezone published website_url]}]
+                                 address twitter_widget_id timezone published website_url facebook_url]}]
   (xhr {:method "POST"
         :base-url (str EVENT_URL id)
         :url-params (merge
@@ -117,6 +117,7 @@
                        "event[twitter_widget_id]" twitter_widget_id
                        "event[timezone]" timezone
                        "event[published]" published
+                       "event[facebook_url]" facebook_url
                        "event[website_url]" website_url })
         :on-complete #()
         :on-error #() }))

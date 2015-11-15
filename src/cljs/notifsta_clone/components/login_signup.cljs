@@ -11,11 +11,10 @@
       (js/FB.api
         "/me?fields=id,name,email"
         (fn [facebook-profile]
-          (js/console.log facebook-profile)
           (http/login
-            (.. facebook-response -authResponse -userID)
-            (.. facebook-response -authResponse -accessToken)
-            (. facebook-profile -email)
+            (aget (aget facebook-response "authResponse") "userID")
+            (aget (aget facebook-response "authResponse") "accessToken")
+            (aget facebook-profile "email")
             (fn [response]
               (let [new-credentials (:data response)]
                 (auth/set-credentials {:auth-token (:authentication_token new-credentials)
